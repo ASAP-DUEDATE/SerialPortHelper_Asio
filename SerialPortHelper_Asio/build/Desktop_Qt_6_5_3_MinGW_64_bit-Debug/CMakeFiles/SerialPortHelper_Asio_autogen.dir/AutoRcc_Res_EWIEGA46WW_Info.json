@@ -1,0 +1,28 @@
+{
+	"BUILD_DIR" : "C:/ProgramData/QtCreator/Links/ba5830966a3544f9408f8b37bba7228b/SerialPortHelper_Asio_autogen",
+	"CMAKE_BINARY_DIR" : "C:/ProgramData/QtCreator/Links/ba5830966a3544f9408f8b37bba7228b",
+	"CMAKE_CURRENT_BINARY_DIR" : "C:/ProgramData/QtCreator/Links/ba5830966a3544f9408f8b37bba7228b",
+	"CMAKE_CURRENT_SOURCE_DIR" : "C:/ProgramData/QtCreator/Links/65f7d671c84c0ccf11897f3b5b852370",
+	"CMAKE_SOURCE_DIR" : "C:/ProgramData/QtCreator/Links/65f7d671c84c0ccf11897f3b5b852370",
+	"CROSS_CONFIG" : false,
+	"GENERATOR" : "Ninja",
+	"INCLUDE_DIR" : "C:/ProgramData/QtCreator/Links/ba5830966a3544f9408f8b37bba7228b/SerialPortHelper_Asio_autogen/include",
+	"INPUTS" : 
+	[
+		"C:/ProgramData/QtCreator/Links/65f7d671c84c0ccf11897f3b5b852370/Pic/checkmark.png",
+		"C:/ProgramData/QtCreator/Links/65f7d671c84c0ccf11897f3b5b852370/Pic/down_arrow.png",
+		"C:/ProgramData/QtCreator/Links/65f7d671c84c0ccf11897f3b5b852370/Pic/checkmark_disable.png",
+		"C:/ProgramData/QtCreator/Links/65f7d671c84c0ccf11897f3b5b852370/Pic/close.png"
+	],
+	"LOCK_FILE" : "C:/ProgramData/QtCreator/Links/ba5830966a3544f9408f8b37bba7228b/CMakeFiles/SerialPortHelper_Asio_autogen.dir/AutoRcc_Res_EWIEGA46WW_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "--no-zstd", "-name", "Res" ],
+	"OUTPUT_CHECKSUM" : "EWIEGA46WW",
+	"OUTPUT_NAME" : "qrc_Res.cpp",
+	"RCC_EXECUTABLE" : "E:/Qtt/6.5.3/mingw_64/./bin/rcc.exe",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "C:/ProgramData/QtCreator/Links/ba5830966a3544f9408f8b37bba7228b/CMakeFiles/SerialPortHelper_Asio_autogen.dir/AutoRcc_Res_EWIEGA46WW_Used.txt",
+	"SOURCE" : "C:/ProgramData/QtCreator/Links/65f7d671c84c0ccf11897f3b5b852370/Res.qrc",
+	"USE_BETTER_GRAPH" : false,
+	"VERBOSITY" : 0
+}
