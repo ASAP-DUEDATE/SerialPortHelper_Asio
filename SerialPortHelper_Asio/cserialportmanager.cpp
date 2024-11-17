@@ -8,7 +8,7 @@
 CSerialPortManager::CSerialPortManager(QObject *parent)
     : QObject{parent},m_IsPortOpen(false),m_IoContext(),m_p_SerialPort(nullptr)
 {
-    m_ReadBuffer.fill(0);
+    m_ReadBuffer.clear();
 
 
 }
@@ -16,15 +16,11 @@ CSerialPortManager::CSerialPortManager(QObject *parent)
 CSerialPortManager::~CSerialPortManager()
 {
     closePort();
-    if (m_AsyncPollThread.valid()) {
-        m_AsyncPollThread.get(); // 等待异步任务完成
-    }
 
 }
 
 bool CSerialPortManager::openPort(const QString &portName, int baudRate, int dataBits, int parity, int stopBits)
 {
-    std::lock_guard<std::mutex> lock(m_PortMutex);
     if(m_IsPortOpen)
     {
         emit signal_ErrorOccurred("Port is already open");
@@ -61,6 +57,8 @@ bool CSerialPortManager::openPort(const QString &portName, int baudRate, int dat
 
         qDebug() << "IoContext status: " << &m_IoContext;
         qDebug() << "Serial port object created: " << m_p_SerialPort.get();
+        qDebug() << "Serial port opened successfully!";
+        m_IsPortOpen.store(true);  // 标记串口为已打开状态
 
         // 启动异步任务来poll io_context
         m_AsyncPollThread = std::async(std::launch::async, [this]() {
@@ -70,7 +68,6 @@ bool CSerialPortManager::openPort(const QString &portName, int baudRate, int dat
             }
         });
 
-        m_IsPortOpen.store(true);
         readData();
         return true;
     }catch(const boost::system::system_error &e)
@@ -80,34 +77,69 @@ bool CSerialPortManager::openPort(const QString &portName, int baudRate, int dat
         return false;
     }
 }
-
 void CSerialPortManager::closePort()
 {
-    if(!m_IsPortOpen) return;
+    if (!m_IsPortOpen) {
+        qDebug() << "Port is already closed!";
+        return;
+    }
 
     try {
-        m_p_SerialPort->cancel();
-
-        boost::system::error_code ec;
-        m_p_SerialPort->close(ec);
-
-        if(ec)
-        {
-            emit signal_ErrorOccurred(ec.message().c_str());
-        }
-
+        // 停止异步操作
         m_IoContext.stop();
 
+        // 强制等待所有异步任务完成
         if (m_AsyncPollThread.valid()) {
-            m_AsyncPollThread.get(); // 等待异步任务完成
+            std::future_status status = m_AsyncPollThread.wait_for(std::chrono::milliseconds(2000));
+            if (status == std::future_status::timeout) {
+                qDebug() << "Async poll thread did not finish in time!";
+            } else {
+                qDebug() << "Async poll thread finished.";
+            }
         }
 
-        m_IsPortOpen.store(false);
-        emit signal_PortClosed();
+        // 取消所有异步操作
+        if (m_p_SerialPort) {
+            boost::system::error_code ec;
+            m_p_SerialPort->cancel(ec);  // 取消所有异步任务
+            if (ec) {
+                qDebug() << "Failed to cancel operations: " << ec.message().c_str();
+            }
+        }
+
+        // 等待所有异步操作完成
+        m_IoContext.restart();  // 重新启动 io_context
+        m_IoContext.run();  // 强制执行所有挂起的异步操作，确保它们完成
+
+        // 关闭串口
+        boost::system::error_code ec;
+        if (m_p_SerialPort) {
+            m_p_SerialPort->close(ec);  // 关闭串口
+        }
+
+        if (ec) {
+            qDebug() << "Failed to close port:" << ec.message().c_str();
+            emit signal_ErrorOccurred(ec.message().c_str());
+            return;
+        }
+
+        qDebug() << "Port successfully closed.";
+
+        // 重置串口对象，彻底清理资源
+        m_p_SerialPort.reset();  // 重置串口对象
+        m_IsPortOpen.store(false);  // 更新状态
+        emit signal_PortClosed();  // 发出信号
+
+        // 额外的延时，确保资源释放
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // 等待更多时间确保串口完全关闭
+
     } catch (const boost::system::system_error &e) {
+        qDebug() << "System error while closing port:" << e.what();
         emit signal_ErrorOccurred(QString("Failed to close port: %1").arg(e.what()));
     }
 }
+
+
 
 bool CSerialPortManager::isOpen() const
 {
@@ -141,7 +173,7 @@ void CSerialPortManager::readData()
         emit signal_ErrorOccurred("Port is not open.");
         return;
     }
-
+    m_ReadBuffer.resize(1024);
     m_p_SerialPort->async_read_some(boost::asio::buffer(m_ReadBuffer)
                                     ,std::bind(&CSerialPortManager::handleRead,this,
                                      boost::asio::placeholders::error,
@@ -181,7 +213,6 @@ void CSerialPortManager::handleRead(const boost::system::error_code &error, size
 
     // 将接收到的数据放入队列中，进行后续处理
     {
-        std::lock_guard<std::mutex> lock(m_QueueMutex);
         m_ReceivedDataQueue.push(receivedData);
     }
 

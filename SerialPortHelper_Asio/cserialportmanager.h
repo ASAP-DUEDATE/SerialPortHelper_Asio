@@ -42,12 +42,10 @@ private:
     std::unique_ptr<boost::asio::serial_port> m_p_SerialPort;
     // 增加一个std::future类型的成员变量来管理poll线程
     std::future<void> m_AsyncPollThread;
-    std::array<char,1024> m_ReadBuffer;
+    std::vector<char> m_ReadBuffer;
     std::deque<boost::asio::const_buffer> m_WriteBuffer;
     std::atomic<bool> m_IsPortOpen;
-    std::mutex m_PortMutex;
     std::queue<QByteArray> m_ReceivedDataQueue;  // 接收数据队列
-    std::mutex m_QueueMutex;  // 保护接收队列的互斥锁
 
 
 };

@@ -6,6 +6,7 @@
 #include <QDebug>
 #include <QPushButton>
 #include <QComboBox>
+#include <thread>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -26,11 +27,13 @@ MainWindow::~MainWindow()
     // 关闭发送串口
     if (m_p_SendSerialPortManager->isOpen()) {
         m_p_SendSerialPortManager->closePort();
+        m_p_SendSerialPortManager.reset();
     }
 
     // 关闭接收串口
     if (m_p_RecSerialPortManager->isOpen()) {
         m_p_RecSerialPortManager->closePort();
+        m_p_RecSerialPortManager.reset();
     }
     delete ui;
 }
@@ -102,6 +105,7 @@ void MainWindow::updateUIOnPortChange(QPushButton *button, bool isPortOpen)
     }else{
         button->setText("打开串口");
     }
+
 }
 
 void MainWindow::on_pushButton_OpenSendPort_clicked()
@@ -110,6 +114,9 @@ void MainWindow::on_pushButton_OpenSendPort_clicked()
     {
         m_p_SendSerialPortManager->closePort();
         updateUIOnPortChange(ui->pushButton_OpenSendPort,false);
+
+        // 等待关闭完成后再尝试重新打开串口
+        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // 等待500ms
     }else{
         QString portName=ui->comboBox_ChoseSendPort->currentData().toString();
         int baudRate=ui->comboBox_ChoseSendBaudRate->currentData().toInt();
@@ -120,6 +127,9 @@ void MainWindow::on_pushButton_OpenSendPort_clicked()
         if(m_p_SendSerialPortManager->openPort(portName,baudRate,dataBits,parity,stopBits))
         {
             updateUIOnPortChange(ui->pushButton_OpenSendPort,true);
+        }else
+        {
+            QMessageBox::warning(this,"警告","打开串口失败");
         }
     }
 }
@@ -131,6 +141,7 @@ void MainWindow::on_pushButton_OpenRecPort_clicked()
     {
         m_p_RecSerialPortManager->closePort();
         updateUIOnPortChange(ui->pushButton_OpenRecPort,false);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // 等待500ms
     }else{
         QString portName=ui->comboBox_ChoseRecPort->currentData().toString();
         int baudRate=ui->comboBox_ChoseRecBaudRate->currentData().toInt();
@@ -141,6 +152,8 @@ void MainWindow::on_pushButton_OpenRecPort_clicked()
         if(m_p_RecSerialPortManager->openPort(portName,baudRate,dataBits,parity,stopBits))
         {
             updateUIOnPortChange(ui->pushButton_OpenRecPort,true);
+        }else{
+            QMessageBox::warning(this,"警告","打开串口失败");
         }
     }
 }
